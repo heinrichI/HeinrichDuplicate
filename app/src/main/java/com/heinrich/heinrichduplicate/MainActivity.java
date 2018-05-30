@@ -1,9 +1,7 @@
 package com.heinrich.heinrichduplicate;
 
 import android.app.Activity;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,6 +12,7 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.heinrich.heinrichduplicate.config.API;
+import com.heinrich.heinrichduplicate.util.PermissionsHelper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +25,8 @@ public class MainActivity extends Activity {
     private static final int REQUEST_DIRECTORY = 2;
     private static final int FOLDERPICKER_CODE = 3;
 
-    private List<String> _foldersPath = new ArrayList<String>();
-    ArrayAdapter<String> _adapter;
+    private List<DirInfo> _folders = new ArrayList<DirInfo>();
+    private DirAdapter _dirAdapter;
 
     private Activity _act = this;
 
@@ -38,12 +37,12 @@ public class MainActivity extends Activity {
 
         PermissionsHelper.getReadStoragePermissions(_act);
 
-        ListView lvFolders = (ListView) findViewById(R.id.folders);
-        _adapter = new ArrayAdapter<String>(this,
+/*      _adapter = new ArrayAdapter<String>(this,
                 android.R.layout.simple_list_item_1,
                 android.R.id.text1,
                 _foldersPath
         );
+        ListView lvFolders = (ListView) findViewById(R.id.folders);
         lvFolders.setAdapter(_adapter);
 
         lvFolders.setOnItemClickListener(new AdapterView.OnItemClickListener() {
@@ -54,8 +53,24 @@ public class MainActivity extends Activity {
                 intent.putExtra(API.DIR_NAME, path);
                 startActivity(intent);
             }
-        });
+        });*/
+
+        _dirAdapter = new DirAdapter(this, R.layout.dir_item,
+                android.R.id.text1, _folders);
+
+        ListView lvFolders = (ListView) findViewById(R.id.folders);
+        lvFolders.setAdapter(_dirAdapter);
+        lvFolders.setOnItemClickListener(myOnItemClickListener);
     }
+
+    AdapterView.OnItemClickListener myOnItemClickListener = new AdapterView.OnItemClickListener() {
+
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position,
+                                long id) {
+            _dirAdapter.toggleChecked(position);
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -70,16 +85,31 @@ public class MainActivity extends Activity {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.add_folder) {
-            selectFolder();
-            return true;
+        switch (id)
+        {
+            case R.id.add_folder:
+                SelectFolder();
+                return true;
+            case R.id.analize:
+                Analize();
+                return true;
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    private void selectFolder() {
+    private void Analize() {
+        List<String> directories = new ArrayList<String>();
+        for (DirInfo dirInfo : _dirAdapter.getCheckedItems()) {
+            directories.add(dirInfo.Path);
+        }
+        Intent intent = new Intent(_act, DuplicateListActivity.class);
+        intent.putExtra(API.DIR_NAME, directories.toArray(new String[directories.size()]));
+        //intent.putStringArrayListExtra(API.DIR_NAME, (ArrayList<String>) directories);
+        startActivity(intent);
+    }
+
+    private void SelectFolder() {
         /*final Intent chooserIntent = new Intent(
                 this,
                 DirectoryChooserActivity.class);
@@ -127,8 +157,9 @@ public class MainActivity extends Activity {
                 if (resultCode == Activity.RESULT_OK) {
                     String folderLocation = data.getExtras().getString("data");
                     Log.i("folderLocation", folderLocation);
+                    _folders.add(new DirInfo(folderLocation, true));
+                    _dirAdapter.notifyDataSetChanged();
                 }
-
                 break;
         }
     }

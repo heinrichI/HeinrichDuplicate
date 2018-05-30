@@ -1,4 +1,4 @@
-package com.heinrich.heinrichduplicate;
+package com.heinrich.heinrichduplicate.util;
 
 import android.Manifest;
 import android.annotation.TargetApi;
