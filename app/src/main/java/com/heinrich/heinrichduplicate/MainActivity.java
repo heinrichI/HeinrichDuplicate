@@ -1,6 +1,7 @@
 package com.heinrich.heinrichduplicate;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -12,8 +13,10 @@ import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
 import com.heinrich.heinrichduplicate.config.API;
+import com.heinrich.heinrichduplicate.util.ObjectSerializer;
 import com.heinrich.heinrichduplicate.util.PermissionsHelper;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +32,9 @@ public class MainActivity extends Activity {
     private DirAdapter _dirAdapter;
 
     private Activity _act = this;
+
+    private SharedPreferences _prefs;
+    static final String FOLDERS = "FOLDERS";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -150,9 +156,9 @@ public class MainActivity extends Activity {
 //                    _adapter.notifyDataSetChanged();
 //                }
 //                break;
-            case 9999:
-                Log.i("Test", "Result URI " + data.getData());
-                break;
+//            case 9999:
+//                Log.i("Test", "Result URI " + data.getData());
+//                break;
             case FOLDERPICKER_CODE:
                 if (resultCode == Activity.RESULT_OK) {
                     String folderLocation = data.getExtras().getString("data");
@@ -163,4 +169,28 @@ public class MainActivity extends Activity {
                 break;
         }
     }
+
+    /*protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        SharedPreferences mPrefs = getSharedPreferences();
+        mCurViewMode = mPrefs.getInt("view_mode", DAY_VIEW_MODE);
+    }
+
+    protected void onPause() {
+        super.onPause();
+
+//        SharedPreferences.Editor ed = _prefs.edit();
+//        ed.("view_mode", mCurViewMode);
+//        ed.commit();
+
+        // save the task list to preference
+        SharedPreferences.Editor editor = _prefs.edit();
+        try {
+            editor.putString(FOLDERS, ObjectSerializer.serialize(_folders));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        editor.commit()
+    }*/
 }

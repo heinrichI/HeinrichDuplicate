@@ -25,7 +25,7 @@ public class DirAdapter extends ArrayAdapter<DirInfo> {
         _objects = objects;
 
         for (int i = 0; i < objects.size(); i++) {
-            _checkedMap.put(i, false);
+            _checkedMap.put(i, _objects.get(i).Checked);
         }
     }
 
