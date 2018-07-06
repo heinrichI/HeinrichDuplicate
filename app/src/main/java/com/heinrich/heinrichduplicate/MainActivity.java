@@ -12,11 +12,14 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.heinrich.heinrichduplicate.config.API;
 import com.heinrich.heinrichduplicate.util.ObjectSerializer;
 import com.heinrich.heinrichduplicate.util.PermissionsHelper;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +38,7 @@ public class MainActivity extends Activity {
 
     private SharedPreferences _prefs;
     static final String FOLDERS = "FOLDERS";
+    private static final String PREFS_TAG = "SharedPrefs";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,6 +64,15 @@ public class MainActivity extends Activity {
                 startActivity(intent);
             }
         });*/
+
+        SharedPreferences _prefs =  getSharedPreferences(PREFS_TAG, MODE_PRIVATE);
+        String jsonPreferences = _prefs.getString(FOLDERS, "");
+
+        //https://stackoverflow.com/questions/28107647/how-to-save-listobject-to-sharedpreferences
+        Type type = new TypeToken<List<DirInfo>>() {}.getType();
+        Gson gson = new Gson();
+        _folders = gson.fromJson(jsonPreferences, type);
+
 
         _dirAdapter = new DirAdapter(this, R.layout.dir_item,
                 android.R.id.text1, _folders);
@@ -175,7 +188,7 @@ public class MainActivity extends Activity {
 
         SharedPreferences mPrefs = getSharedPreferences();
         mCurViewMode = mPrefs.getInt("view_mode", DAY_VIEW_MODE);
-    }
+    }*/
 
     protected void onPause() {
         super.onPause();
@@ -185,12 +198,20 @@ public class MainActivity extends Activity {
 //        ed.commit();
 
         // save the task list to preference
-        SharedPreferences.Editor editor = _prefs.edit();
+        /*SharedPreferences.Editor editor = _prefs.edit();
         try {
             editor.putString(FOLDERS, ObjectSerializer.serialize(_folders));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        editor.commit()
-    }*/
+        editor.commit()*/
+
+        SharedPreferences.Editor editor = _prefs.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(_folders);
+        editor.putString(FOLDERS, json);
+        editor.commit();
+    }
+
+
 }
