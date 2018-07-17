@@ -31,7 +31,7 @@ public class MainActivity extends Activity {
     private static final int REQUEST_DIRECTORY = 2;
     private static final int FOLDERPICKER_CODE = 3;
 
-    private List<DirInfo> _folders = new ArrayList<DirInfo>();
+    private List<DirInfo> _folders;
     private DirAdapter _dirAdapter;
 
     private Activity _act = this;
@@ -72,7 +72,8 @@ public class MainActivity extends Activity {
         Type type = new TypeToken<List<DirInfo>>() {}.getType();
         Gson gson = new Gson();
         _folders = gson.fromJson(jsonPreferences, type);
-
+        if (_folders == null)
+            _folders = new ArrayList<DirInfo>();
 
         _dirAdapter = new DirAdapter(this, R.layout.dir_item,
                 android.R.id.text1, _folders);
