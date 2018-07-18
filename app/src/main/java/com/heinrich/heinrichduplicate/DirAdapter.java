@@ -61,6 +61,11 @@ public class DirAdapter extends ArrayAdapter<DirInfo> {
         return checkedItems;
     }
 
+    public void Delete(int position) {
+        _checkedMap.delete(position);
+        notifyDataSetChanged();
+    }
+
     private class ViewHolder {
         public android.widget.CheckedTextView CheckedTextView;
     }

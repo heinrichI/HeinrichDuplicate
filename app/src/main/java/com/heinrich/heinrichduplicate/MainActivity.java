@@ -81,14 +81,23 @@ public class MainActivity extends Activity {
         ListView lvFolders = (ListView) findViewById(R.id.folders);
         lvFolders.setAdapter(_dirAdapter);
         lvFolders.setOnItemClickListener(myOnItemClickListener);
+        lvFolders.setOnItemLongClickListener(myOnItemLongClickListener);
     }
 
     AdapterView.OnItemClickListener myOnItemClickListener = new AdapterView.OnItemClickListener() {
-
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position,
                                 long id) {
             _dirAdapter.toggleChecked(position);
+        }
+    };
+
+    AdapterView.OnItemLongClickListener myOnItemLongClickListener= new AdapterView.OnItemLongClickListener() {
+        @Override
+        public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
+            Log.v("long clicked","pos: " + position);
+            _dirAdapter.Delete(position);
+            return true;
         }
     };
 
@@ -207,6 +216,8 @@ public class MainActivity extends Activity {
         }
         editor.commit()*/
 
+        if (_prefs == null)
+            _prefs =  getSharedPreferences(PREFS_TAG, MODE_PRIVATE);
         SharedPreferences.Editor editor = _prefs.edit();
         Gson gson = new Gson();
         String json = gson.toJson(_folders);

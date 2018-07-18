@@ -24,6 +24,11 @@
         //android:paddingStart="?android:attr/listPreferredItemPaddingLeft"
         android:textAppearance="?android:attr/textAppearanceListItemSmall" />-->
 
+    <ImageView
+        android:id="@+id/img"
+        android:layout_width="50dp"
+        android:layout_height="50dp"/>
+
     <CheckedTextView
         android:id="@+id/checkedTextView"
         android:layout_width="match_parent"

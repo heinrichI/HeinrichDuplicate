@@ -1,12 +1,14 @@
 package com.heinrich.heinrichduplicate;
 
 import android.content.Context;
+import android.graphics.BitmapFactory;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.CheckedTextView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +28,7 @@ public class DuplicateAdapter extends BaseAdapter {
     class ViewHolder {
         public TextView textView;
         public CheckedTextView checkedTextView;
+        public ImageView imageView;
     }
 
     private static final int TYPE_ITEM = 0;
@@ -79,6 +82,7 @@ public class DuplicateAdapter extends BaseAdapter {
                 case TYPE_ITEM:
                     convertView = _inflater.inflate(R.layout.dupl_item, null);
                     holder.checkedTextView = (CheckedTextView) convertView.findViewById(R.id.checkedTextView);
+                    holder.imageView = (ImageView) convertView.findViewById(R.id.img);
                     break;
                 case TYPE_SEPARATOR:
                     convertView = _inflater.inflate(R.layout.dupl_header_item, null);
@@ -99,6 +103,7 @@ public class DuplicateAdapter extends BaseAdapter {
                 FileInfo info = _mapPositionFileInfo.get(position);
                 if (info != null) {
                     holder.checkedTextView.setChecked(info.Checked);
+                    holder.imageView.setImageBitmap(BitmapFactory.decodeFile(info.Path));
                 }
 
                 break;

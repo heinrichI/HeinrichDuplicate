@@ -6,6 +6,8 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 
@@ -41,18 +43,28 @@ public class DuplicateListActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_duplicate_list);
 
-        ListView mLvDuplicateFiles = (ListView) findViewById(R.id.duplicate_files);
+        ListView lvDuplicateFiles = (ListView) findViewById(R.id.duplicate_files);
 //        _adapter = new ArrayAdapter<String>(_act,
 //                android.R.layout.simple_list_item_1,
 //                android.R.id.text1,
 //                _duplicateFiles);
+        lvDuplicateFiles.setOnItemClickListener(myOnItemClickListener);
+
         _adapter = new DuplicateAdapter(this);
-        mLvDuplicateFiles.setAdapter(_adapter);
+        lvDuplicateFiles.setAdapter(_adapter);
 
         _paths = getIntent().getStringArrayExtra(API.DIR_NAME);
         //setTitle(mPath);
         Analize();
     }
+
+    AdapterView.OnItemClickListener myOnItemClickListener = new AdapterView.OnItemClickListener() {
+        @Override
+        public void onItemClick(AdapterView<?> parent, View view, int position,
+                                long id) {
+            _adapter.toggleChecked(position);
+        }
+    };
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -95,6 +107,7 @@ public class DuplicateListActivity extends Activity {
                             if (f.isDirectory()) {
                                 continue;
                             }
+                            publishProgress(String.format("Calculate {0}", f.getPath()));
                             String md5 = MD5.calculateMD5(f);
                             ArrayList<String> fs;
                             if (!allFiles.containsKey(md5)) {
@@ -115,20 +128,19 @@ public class DuplicateListActivity extends Activity {
                         return null;
                     }
 
-                    for (String k : allFiles.keySet()) {
-                        ArrayList<String> fs = allFiles.get(k);
-                        if (fs.size() > 1) {
-                            DuplGroup group = new DuplGroup(k);
-                            List<FileInfo> files2 = new ArrayList<>(fs.size());
-                            for (String p : fs.subList(1, fs.size())) {
-                                files2.add(new FileInfo(p, false, group));
-                            }
-                            group.Files = files2;
-                            _groups.add(group);
+                    //Log.d("doInBackground", "mAllFiles", allFiles.toString());
+                }//end for
+                for (String k : allFiles.keySet()) {
+                    ArrayList<String> fs = allFiles.get(k);
+                    if (fs.size() > 1) {
+                        DuplGroup group = new DuplGroup(k);
+                        List<FileInfo> files2 = new ArrayList<>(fs.size());
+                        for (String p : fs) {
+                            files2.add(new FileInfo(p, false, group));
                         }
+                        group.Files = files2;
+                        _groups.add(group);
                     }
-
-                    Log.d("doInBackground", "mAllFiles", (Throwable) allFiles);
                 }
             } catch (Exception e) {
                 Log.e("doInBackground", String.valueOf(e));
