@@ -1,17 +1,22 @@
 package com.heinrich.heinrichduplicate;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ListView;
 
 import com.heinrich.heinrichduplicate.config.API;
+import com.heinrich.heinrichduplicate.util.FileUtil;
 import com.heinrich.heinrichduplicate.util.MD5;
 import com.heinrich.heinrichduplicate.util.ToastUtil;
 
@@ -20,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -66,11 +72,71 @@ public class DuplicateListActivity extends Activity {
         }
     };
 
+//    @Override
+//    public void onItemCheckedStateChanged(android.view.ActionMode mode,
+//                                          int position, long id, boolean checked)
+//    {
+//    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_dupl_list, menu);
         return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        int id = item.getItemId();
+
+        switch (id)
+        {
+            case R.id.setBytext:
+                SetByText();
+                return true;
+            case R.id.delete:
+                DeleteFiles();
+                return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    private void DeleteFiles() {
+        if (_groups.isEmpty()) {
+            ToastUtil.showShortToast(_act, "Please Exe Analize Task before..");
+            return;
+        }
+        new DeleteFileTask().execute();
+    }
+
+    private void SetByText()
+    {
+        AlertDialog.Builder alert = new AlertDialog.Builder(this);
+        alert.setTitle("Set by text");
+        alert.setMessage("Enter text");
+
+        // Set an EditText view to get user input
+        final EditText input = new EditText(this);
+        alert.setView(input);
+
+        alert.setPositiveButton("Ok", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                String value = input.getText().toString();
+                _adapter.SetByText(value);
+            }
+        });
+
+        alert.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+            public void onClick(DialogInterface dialog, int whichButton) {
+                // Canceled.
+            }
+        });
+
+        alert.show();
     }
 
     private void Analize() {
@@ -80,56 +146,54 @@ public class DuplicateListActivity extends Activity {
         _groups.clear();
         _adapter.notifyDataSetChanged();
 
-        new AnalizeTask().execute();
+        new AnalizeTask().execute(_paths);
     }
 
 
-    private class AnalizeTask extends AsyncTask<Void, Void, Void> {
-        ProgressDialog mProgressDialog;
+    private class AnalizeTask extends AsyncTask<String, String, Void> {
+        ProgressDialog _progressDialog;
 
         @Override
         protected void onPreExecute() {
             super.onPreExecute();
-            mProgressDialog = ProgressDialog.show(_act, null, "Analizinnng....", true, false);
-
+            _progressDialog = ProgressDialog.show(_act, null, "Analizinnng....", true, false);
         }
 
         @Override
-        protected Void doInBackground(Void... params) {
+        protected Void doInBackground(String... params) {
             try {
+                publishProgress("Read files");
+                List<File> files = FileUtil.GetFiles(params);
+
+                publishProgress(String.format("Sort by file size %1$s files", files.size()));
+                files = FileUtil.GetFilesWithSameSize(files);
+
+                int current = 0;
+                int total = files.size();
+
                 Map<String, ArrayList<String>> allFiles = new HashMap<String, ArrayList<String>>();
-                for (String path: _paths) {
-
-                    File file = new File(path);
-                    File[] files = file.listFiles();
-                    if (files != null) {
-                        for (File f : files) {
-                            if (f.isDirectory()) {
-                                continue;
-                            }
-                            publishProgress(String.format("Calculate {0}", f.getPath()));
-                            String md5 = MD5.calculateMD5(f);
-                            ArrayList<String> fs;
-                            if (!allFiles.containsKey(md5)) {
-                                fs = new ArrayList<String>();
-                                allFiles.put(md5, fs);
-                            }
-                            fs = allFiles.get(md5);
-                            fs.add(f.getPath());
-                            Collections.sort(fs, new Comparator<String>() {
-                                @Override
-                                public int compare(String lhs, String rhs) {
-                                    return lhs.length() - rhs.length();
-                                }
-                            });
-                        }
-                    } else {
-                        //ToastUtil.showShortToast(mAct, "Direction is Empty");
-                        return null;
+                for (File f : files) {
+                    Log.d("Calculate md5 for ",  f.getPath());
+                    current++;
+                    String progressMessage = String.format("%1$s of %2$s (%3$s)", current, total, f.getPath());
+                    publishProgress(progressMessage);
+                    String md5 = MD5.calculateMD5(f);
+                    ArrayList<String> fs;
+                    if (!allFiles.containsKey(md5)) {
+                        fs = new ArrayList<String>();
+                        allFiles.put(md5, fs);
                     }
-
-                    //Log.d("doInBackground", "mAllFiles", allFiles.toString());
+                    fs = allFiles.get(md5);
+                    fs.add(f.getPath());
+                    Collections.sort(fs, new Comparator<String>() {
+                        @Override
+                        public int compare(String lhs, String rhs) {
+                            return lhs.length() - rhs.length();
+                        }
+                    });
+                //Log.d("doInBackground", "mAllFiles", allFiles.toString());
                 }//end for
+
                 for (String k : allFiles.keySet()) {
                     ArrayList<String> fs = allFiles.get(k);
                     if (fs.size() > 1) {
@@ -150,13 +214,75 @@ public class DuplicateListActivity extends Activity {
         }
 
         @Override
+        protected void onProgressUpdate(String... values) {
+            Log.d("onProgressUpdate ",  values[0]);
+            super.onProgressUpdate(values);
+            //_progressDialog.setMessage(String.format("Calculate %1$s", values[0]));
+            _progressDialog.setMessage( values[0]);
+        }
+
+        @Override
         protected void onPostExecute(Void aVoid) {
             super.onPostExecute(aVoid);
-            mProgressDialog.dismiss();
+            _progressDialog.dismiss();
             _adapter.addGroups(_groups);
             if (_groups.isEmpty()) {
                 ToastUtil.showShortToast(_act, "No Duplicate Files.");
             }
+        }
+    }
+
+    private class DeleteFileTask extends AsyncTask<Void, String, Void> {
+        ProgressDialog _progressDialog;
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            _progressDialog = ProgressDialog.show(_act, null, "Deleting....", true, false);
+        }
+
+        @Override
+        protected void onProgressUpdate(String... values) {
+            //super.onProgressUpdate(values);
+            //_adapter.notifyDataSetChanged();
+            _progressDialog.setMessage(String.format("Delete %1$s", values[0]));
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            try {
+//                Iterator<String> iterator = _groups.iterator();
+//                while (iterator.hasNext()) {
+//                    String f = iterator.next();
+//                    new File(f).delete();
+//                    iterator.remove();
+//                    publishProgress(0);
+//                    //TimeUnit.SECONDS.sleep(3);
+//                }
+                List<FileInfo> forDelete = _adapter.GetChecked();
+                for (FileInfo file : forDelete)
+                {
+                    new File(file.Path).delete();
+                    //iterator.remove();
+                    publishProgress(file.Path);
+                }
+            } catch (Exception ex) {
+                Log.e("doInBackground", String.valueOf(ex));
+            }
+
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void aVoid) {
+            super.onPostExecute(aVoid);
+            _progressDialog.dismiss();
+            _groups.clear();
+            //_adapter.addGroups(_groups);
+            _adapter.notifyDataSetChanged();
+            //if (mDuplicateFiles.isEmpty()) {
+            //    ToastUtil.showShortToast(mAct, "Success.");
+            //}
         }
     }
 

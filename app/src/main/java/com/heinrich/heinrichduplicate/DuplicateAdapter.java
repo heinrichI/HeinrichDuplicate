@@ -12,6 +12,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -170,12 +171,33 @@ public class DuplicateAdapter extends BaseAdapter {
             FileInfo info = _mapPositionFileInfo.valueAt(i);
             if (info.Path.contains(value)) {
                 if (info.Group.IsAllChecked(info)) {
-                    Toast.makeText(_context.getApplicationContext(), "Вы не можете выбрать все записи!", Toast.LENGTH_LONG)
+                    StringBuilder builder = new StringBuilder("Вы не можете выбрать все записи!");
+                    builder.append("В группе " + info.Group.Header);
+                    for (FileInfo file :  info.Group.Files ) {
+                        file.Checked = false;
+                        builder.append(file.Path);
+                    }
+                    Toast.makeText(_context.getApplicationContext(), builder, Toast.LENGTH_LONG)
                             .show();
                     continue;
                 }
                 info.Checked = true;
             }
         }
+    }
+
+    public List<FileInfo> GetChecked() {
+        List<FileInfo> list = new ArrayList<FileInfo>();
+        for(int i = 0; i < _mapPositionFileInfo.size(); i++)
+        {
+            FileInfo info = _mapPositionFileInfo.valueAt(i);
+            for (FileInfo file :  info.Group.Files )
+            {
+                if (file.Checked
+                        && !list.contains(file))
+                    list.add(file);
+            }
+        }
+        return list;
     }
 }

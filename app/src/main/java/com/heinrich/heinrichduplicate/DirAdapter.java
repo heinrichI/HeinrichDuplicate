@@ -63,6 +63,7 @@ public class DirAdapter extends ArrayAdapter<DirInfo> {
 
     public void Delete(int position) {
         _checkedMap.delete(position);
+        _objects.remove(position);
         notifyDataSetChanged();
     }
 
